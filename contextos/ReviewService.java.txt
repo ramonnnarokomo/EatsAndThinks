@@ -1,0 +1,275 @@
+package com.eatsandthinks.demo.service;
+
+import com.eatsandthinks.demo.entity.LocalEntity;
+import com.eatsandthinks.demo.entity.Review;
+import com.eatsandthinks.demo.entity.User;
+import com.eatsandthinks.demo.repository.LocalRepository;
+import com.eatsandthinks.demo.repository.ReviewRepository;
+import com.eatsandthinks.demo.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class ReviewService {
+
+    private final ReviewRepository reviewRepository;
+    private final LocalRepository localRepository;
+    private final UserRepository userRepository;
+
+    public ReviewService(ReviewRepository reviewRepository, 
+                        LocalRepository localRepository,
+                        UserRepository userRepository) {
+        this.reviewRepository = reviewRepository;
+        this.localRepository = localRepository;
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * Crea una nueva reseña y guarda el local si no existe
+     */
+    @Transactional
+    public ReviewDTO createReview(ReviewCreationDTO dto) {
+        System.out.println("📝 Creando reseña para local: " + dto.localData().nombre());
+        
+        // 1. Buscar o crear el Local
+        LocalEntity local = localRepository.findByPlaceId(dto.localData().placeId())
+            .orElseGet(() -> {
+                System.out.println("🆕 Creando nuevo local en BD: " + dto.localData().nombre());
+                LocalEntity newLocal = new LocalEntity();
+                newLocal.setPlaceId(dto.localData().placeId());
+                newLocal.setNombre(dto.localData().nombre());
+                newLocal.setDireccion(dto.localData().direccion());
+                newLocal.setTipo(dto.localData().tipo());
+                newLocal.setLatitud(dto.localData().lat());
+                newLocal.setLongitud(dto.localData().lng());
+                newLocal.setPrecioNivel(dto.localData().priceLevel());
+                newLocal.setFotoRef(dto.localData().photoRef());
+                newLocal.setSource(LocalEntity.Source.GOOGLE);
+                return localRepository.save(newLocal);
+            });
+
+        // 2. Verificar que el usuario existe
+        User user = userRepository.findById(dto.userId())
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // 3. Crear la reseña
+        Review review = new Review();
+        review.setUserId(dto.userId());
+        review.setLocalId(local.getId());
+        review.setPuntuacion(dto.puntuacion());
+        review.setComentario(dto.comentario());
+        review.setFecha(LocalDateTime.now());
+
+        Review savedReview = reviewRepository.save(review);
+        
+        // 4. Actualizar rating del local
+        updateLocalRating(local.getId());
+
+        System.out.println("✅ Reseña creada con ID: " + savedReview.getId());
+        
+        return new ReviewDTO(
+            savedReview.getId(),
+            savedReview.getPuntuacion(),
+            savedReview.getComentario(),
+            savedReview.getFecha(),
+            savedReview.getUserId(),
+            user.getNombre(),
+            local.getPlaceId()
+        );
+    }
+
+    /**
+     * Obtiene todas las reseñas de un local por placeId
+     */
+    public List<ReviewDTO> getReviewsByLocalPlaceId(String placeId) {
+        System.out.println("🔍 Buscando reseñas para placeId: " + placeId);
+        
+        LocalEntity local = localRepository.findByPlaceId(placeId)
+            .orElse(null);
+        
+        if (local == null) {
+            System.out.println("⚠️ Local no encontrado en BD");
+            return List.of();
+        }
+
+        List<Review> reviews = reviewRepository.findByLocalId(local.getId());
+        System.out.println("✅ Encontradas " + reviews.size() + " reseñas");
+        
+        return reviews.stream()
+            .map(r -> {
+                User user = userRepository.findById(r.getUserId()).orElse(null);
+                String authorName = user != null ? user.getNombre() : "Usuario Anónimo";
+                return new ReviewDTO(
+                    r.getId(),
+                    r.getPuntuacion(),
+                    r.getComentario(),
+                    r.getFecha(),
+                    r.getUserId(),
+                    authorName,
+                    placeId
+                );
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtiene todas las reseñas de un usuario
+     */
+    public List<ReviewDTO> getReviewsByUserId(Long userId) {
+        System.out.println("🔍 Buscando reseñas del usuario: " + userId);
+        
+        List<Review> reviews = reviewRepository.findByUserId(userId);
+        
+        return reviews.stream()
+            .map(r -> {
+                LocalEntity local = localRepository.findById(r.getLocalId()).orElse(null);
+                User user = userRepository.findById(r.getUserId()).orElse(null);
+                
+                return new ReviewDTO(
+                    r.getId(),
+                    r.getPuntuacion(),
+                    r.getComentario(),
+                    r.getFecha(),
+                    r.getUserId(),
+                    user != null ? user.getNombre() : "Usuario",
+                    local != null ? local.getPlaceId() : null,
+                    local != null ? local.getNombre() : "Local eliminado"
+                );
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Actualiza una reseña existente
+     */
+    @Transactional
+    public ReviewDTO updateReview(Long reviewId, ReviewUpdateDTO dto, Long userId) {
+        System.out.println("📝 Actualizando reseña ID: " + reviewId);
+        
+        Review review = reviewRepository.findById(reviewId)
+            .orElseThrow(() -> new RuntimeException("Reseña no encontrada"));
+        
+        // Verificar que el usuario es el autor
+        if (!review.getUserId().equals(userId)) {
+            throw new RuntimeException("No tienes permisos para editar esta reseña");
+        }
+
+        review.setPuntuacion(dto.puntuacion());
+        review.setComentario(dto.comentario());
+        review.setFecha(LocalDateTime.now()); // Actualizar fecha de modificación
+        
+        Review updated = reviewRepository.save(review);
+        
+        // Actualizar rating del local
+        updateLocalRating(review.getLocalId());
+        
+        User user = userRepository.findById(updated.getUserId()).orElse(null);
+        LocalEntity local = localRepository.findById(updated.getLocalId()).orElse(null);
+        
+        System.out.println("✅ Reseña actualizada");
+        
+        return new ReviewDTO(
+            updated.getId(),
+            updated.getPuntuacion(),
+            updated.getComentario(),
+            updated.getFecha(),
+            updated.getUserId(),
+            user != null ? user.getNombre() : "Usuario",
+            local != null ? local.getPlaceId() : null
+        );
+    }
+
+    /**
+     * Elimina una reseña
+     */
+    @Transactional
+    public void deleteReview(Long reviewId, Long userId) {
+        System.out.println("🗑️ Eliminando reseña ID: " + reviewId);
+        
+        Review review = reviewRepository.findById(reviewId)
+            .orElseThrow(() -> new RuntimeException("Reseña no encontrada"));
+        
+        // Verificar que el usuario es el autor
+        if (!review.getUserId().equals(userId)) {
+            throw new RuntimeException("No tienes permisos para eliminar esta reseña");
+        }
+
+        Long localId = review.getLocalId();
+        reviewRepository.delete(review);
+        
+        // Actualizar rating del local
+        updateLocalRating(localId);
+        
+        System.out.println("✅ Reseña eliminada");
+    }
+
+    /**
+     * Actualiza el rating promedio de un local basado en sus reseñas
+     */
+    private void updateLocalRating(Long localId) {
+        List<Review> reviews = reviewRepository.findByLocalId(localId);
+        
+        if (reviews.isEmpty()) {
+            return;
+        }
+        
+        double avgRating = reviews.stream()
+            .mapToInt(Review::getPuntuacion)
+            .average()
+            .orElse(0.0);
+        
+        LocalEntity local = localRepository.findById(localId).orElse(null);
+        if (local != null) {
+            local.setRating(avgRating);
+            local.setTotalValoraciones(reviews.size());
+            localRepository.save(local);
+            System.out.println("📊 Rating actualizado: " + avgRating + " (" + reviews.size() + " reseñas)");
+        }
+    }
+
+    // ========== DTOs ==========
+    
+    public record ReviewCreationDTO(
+        Integer puntuacion,
+        String comentario,
+        Long userId,
+        LocalData localData
+    ) {}
+    
+    public record LocalData(
+        String placeId,
+        String nombre,
+        String direccion,
+        String tipo,
+        Double lat,
+        Double lng,
+        Integer priceLevel,
+        String photoRef
+    ) {}
+
+    public record ReviewDTO(
+        Long reviewId,
+        Integer puntuacion,
+        String comentario,
+        LocalDateTime fecha,
+        Long userId,
+        String author,
+        String placeId,
+        String restaurantName
+    ) {
+        // Constructor alternativo sin restaurantName
+        public ReviewDTO(Long reviewId, Integer puntuacion, String comentario, 
+                        LocalDateTime fecha, Long userId, String author, String placeId) {
+            this(reviewId, puntuacion, comentario, fecha, userId, author, placeId, null);
+        }
+    }
+
+    public record ReviewUpdateDTO(
+        Integer puntuacion,
+        String comentario
+    ) {}
+}

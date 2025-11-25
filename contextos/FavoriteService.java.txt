@@ -1,0 +1,134 @@
+package com.eatsandthinks.demo.service;
+
+import com.eatsandthinks.demo.entity.Favorite;
+import com.eatsandthinks.demo.entity.LocalEntity;
+import com.eatsandthinks.demo.repository.FavoriteRepository;
+import com.eatsandthinks.demo.repository.LocalRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class FavoriteService {
+
+    private final FavoriteRepository favoriteRepository;
+    private final LocalRepository localRepository;
+
+    public FavoriteService(FavoriteRepository favoriteRepository, LocalRepository localRepository) {
+        this.favoriteRepository = favoriteRepository;
+        this.localRepository = localRepository;
+    }
+
+    /**
+     * Agrega un local a favoritos
+     */
+    @Transactional
+    public FavoriteDTO addFavorite(Long userId, String placeId) {
+        System.out.println("❤️ Agregando favorito - Usuario: " + userId + ", Place: " + placeId);
+        
+        // Buscar o crear el local
+        LocalEntity local = localRepository.findByPlaceId(placeId)
+            .orElseThrow(() -> new RuntimeException("Local no encontrado"));
+
+        // Verificar si ya existe
+        if (favoriteRepository.existsByUserIdAndLocalId(userId, local.getId())) {
+            throw new RuntimeException("El local ya está en favoritos");
+        }
+
+        Favorite favorite = new Favorite();
+        favorite.setUserId(userId);
+        favorite.setLocalId(local.getId());
+        favorite.setPlaceId(placeId);
+        favorite.setCreatedAt(LocalDateTime.now());
+
+        Favorite saved = favoriteRepository.save(favorite);
+        
+        System.out.println("✅ Favorito agregado");
+        return toDTO(saved, local);
+    }
+
+    /**
+     * Elimina un local de favoritos
+     */
+    @Transactional
+    public void removeFavorite(Long userId, String placeId) {
+        System.out.println("💔 Eliminando favorito - Usuario: " + userId + ", Place: " + placeId);
+        
+        LocalEntity local = localRepository.findByPlaceId(placeId)
+            .orElseThrow(() -> new RuntimeException("Local no encontrado"));
+
+        favoriteRepository.deleteByUserIdAndLocalId(userId, local.getId());
+        System.out.println("✅ Favorito eliminado");
+    }
+
+    /**
+     * Obtiene todos los favoritos de un usuario
+     */
+    public List<FavoriteDTO> getUserFavorites(Long userId) {
+        System.out.println("🔍 Obteniendo favoritos del usuario: " + userId);
+        
+        List<Favorite> favorites = favoriteRepository.findByUserId(userId);
+        
+        return favorites.stream()
+            .map(fav -> {
+                LocalEntity local = localRepository.findById(fav.getLocalId()).orElse(null);
+                return toDTO(fav, local);
+            })
+            .filter(dto -> dto.local() != null) // Filtrar locales eliminados
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Verifica si un local está en favoritos
+     */
+    public boolean isFavorite(Long userId, String placeId) {
+        LocalEntity local = localRepository.findByPlaceId(placeId).orElse(null);
+        if (local == null) return false;
+        
+        return favoriteRepository.existsByUserIdAndLocalId(userId, local.getId());
+    }
+
+    private FavoriteDTO toDTO(Favorite favorite, LocalEntity local) {
+        if (local == null) return null;
+        
+        LocalDTO localDTO = new LocalDTO(
+            local.getPlaceId(),
+            local.getNombre(),
+            local.getDireccion(),
+            local.getRating(),
+            local.getTotalValoraciones(),
+            local.getPrecioNivel(),
+            local.getTipo(),
+            local.getFotoRef()
+        );
+        
+        return new FavoriteDTO(
+            favorite.getId(),
+            favorite.getUserId(),
+            favorite.getCreatedAt(),
+            localDTO
+        );
+    }
+
+    // DTOs
+    public record FavoriteDTO(
+        Long id,
+        Long userId,
+        LocalDateTime createdAt,
+        LocalDTO local
+    ) {}
+
+    public record LocalDTO(
+        String placeId,
+        String name,
+        String address,
+        Double rating,
+        Integer totalRatings,
+        Integer priceLevel,
+        String type,
+        String photoRef
+    ) {}
+}

@@ -1,0 +1,26 @@
+# Backend
+eatsandthinks-backend/target/
+eatsandthinks-backend/.mvn/
+eatsandthinks-backend/mvnw
+eatsandthinks-backend/mvnw.cmd
+eatsandthinks-backend/.idea/
+eatsandthinks-backend/*.iml
+
+# Frontend
+EatsAndThinks Web Prototype/node_modules/
+EatsAndThinks Web Prototype/build/
+EatsAndThinks Web Prototype/dist/
+EatsAndThinks Web Prototype/.vite/
+EatsAndThinks Web Prototype/package-lock.json
+
+# General
+.DS_Store
+.env
+.env.local
+*.log
+.vscode/
+.idea/
+
+# Docker (no necesario para Railway)
+*.tar
+
