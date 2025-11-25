@@ -7,7 +7,6 @@ RUN mvn clean package -DskipTests
 
 # 2. Etapa de Ejecución (Run)
 FROM eclipse-temurin:17-jdk-alpine
-VOLUME /tmp
 # Copiamos el JAR generado en la etapa anterior. 
 # El asterisco *.jar asegura que funcione sin importar cómo se llame tu proyecto.
 COPY --from=build /app/target/*.jar app.jar
