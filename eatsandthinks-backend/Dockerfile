@@ -1,29 +1,23 @@
-# Etapa 1: Build
+# Dockerfile para Railway
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copiar archivos de configuración de Maven
+# Copiar archivos del proyecto
 COPY pom.xml .
 COPY src ./src
 
-# Construir la aplicación (saltando tests para acelerar)
+# Construir el JAR
 RUN mvn clean package -DskipTests
 
-# Etapa 2: Runtime
+# Imagen final
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Copiar el JAR construido desde la etapa anterior
+# Copiar el JAR construido
 COPY --from=build /app/target/*.jar app.jar
 
-# Exponer el puerto 8080
+# Puerto
 EXPOSE 8080
 
-# Variables de entorno por defecto (se pueden sobrescribir)
-ENV SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eatsandthinks
-ENV SPRING_DATASOURCE_USERNAME=root
-ENV SPRING_DATASOURCE_PASSWORD=rootpassword
-
-# Comando para ejecutar la aplicación
-ENTRYPOINT ["java", "-jar", "app.jar"]
-
+# Ejecutar
+CMD ["java", "-jar", "app.jar"]

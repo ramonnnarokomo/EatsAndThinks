@@ -1,11 +1,7 @@
 [build]
-builder = "nixpacks"
-buildCommand = "cd eatsandthinks-backend && ./mvnw clean package -DskipTests"
+builder = "dockerfile"
+dockerfilePath = "eatsandthinks-backend/Dockerfile"
 
 [deploy]
-startCommand = "cd eatsandthinks-backend && java -jar target/*.jar"
-healthcheckPath = "/actuator/health"
-healthcheckTimeout = 100
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 10
+startCommand = "java -jar app.jar"
 
