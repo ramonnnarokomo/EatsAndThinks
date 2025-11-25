@@ -1,0 +1,13 @@
+[phases.setup]
+nixPkgs = ["jdk21", "maven"]
+
+[phases.build]
+cmds = [
+    "cd eatsandthinks-backend",
+    "chmod +x mvnw",
+    "./mvnw clean package -DskipTests"
+]
+
+[phases.start]
+cmd = "cd eatsandthinks-backend && java -jar target/*.jar"
+
