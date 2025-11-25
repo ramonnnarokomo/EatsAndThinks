@@ -2,9 +2,9 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copiar archivos del proyecto
-COPY pom.xml .
-COPY src ./src
+# Copiar archivos del proyecto (ajustado para Railway)
+COPY ./pom.xml .
+COPY ./src ./src
 
 # Construir el JAR
 RUN mvn clean package -DskipTests
