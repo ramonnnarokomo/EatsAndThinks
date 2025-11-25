@@ -1,0 +1,136 @@
+package com.eatsandthinks.demo.controller;
+
+import com.eatsandthinks.demo.entity.User;
+import com.eatsandthinks.demo.repository.UserRepository;
+import com.eatsandthinks.demo.service.FavoriteService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/favorites")
+@CrossOrigin(origins = "http://localhost:3000")
+public class FavoriteController {
+
+    private final FavoriteService favoriteService;
+    private final UserRepository userRepository;
+
+    public FavoriteController(FavoriteService favoriteService, UserRepository userRepository) {
+        this.favoriteService = favoriteService;
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * POST /api/favorites
+     * Agrega un local a favoritos
+     */
+    @PostMapping
+    public ResponseEntity<?> addFavorite(
+            @RequestBody AddFavoriteRequest request,
+            Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body(Map.of("message", "No autenticado"));
+            }
+
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            FavoriteService.FavoriteDTO favorite = favoriteService.addFavorite(user.getId(), request.placeId());
+            
+            return ResponseEntity.status(201).body(favorite);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("❌ Error agregando favorito: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("message", "Error al agregar favorito"));
+        }
+    }
+
+    /**
+     * GET /api/favorites
+     * Obtiene todos los favoritos del usuario
+     */
+    @GetMapping
+    public ResponseEntity<?> getUserFavorites(Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body(Map.of("message", "No autenticado"));
+            }
+
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            List<FavoriteService.FavoriteDTO> favorites = favoriteService.getUserFavorites(user.getId());
+            
+            return ResponseEntity.ok(favorites);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error obteniendo favoritos: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("message", "Error al obtener favoritos"));
+        }
+    }
+
+    /**
+     * DELETE /api/favorites/{placeId}
+     * Elimina un local de favoritos
+     */
+    @DeleteMapping("/{placeId}")
+    public ResponseEntity<?> removeFavorite(
+            @PathVariable String placeId,
+            Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body(Map.of("message", "No autenticado"));
+            }
+
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            favoriteService.removeFavorite(user.getId(), placeId);
+            
+            return ResponseEntity.ok(Map.of("message", "Favorito eliminado"));
+
+        } catch (Exception e) {
+            System.err.println("❌ Error eliminando favorito: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("message", "Error al eliminar favorito"));
+        }
+    }
+
+    /**
+     * GET /api/favorites/check/{placeId}
+     * Verifica si un local está en favoritos
+     */
+    @GetMapping("/check/{placeId}")
+    public ResponseEntity<?> checkFavorite(
+            @PathVariable String placeId,
+            Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.ok(Map.of("isFavorite", false));
+            }
+
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            boolean isFavorite = favoriteService.isFavorite(user.getId(), placeId);
+            
+            return ResponseEntity.ok(Map.of("isFavorite", isFavorite));
+
+        } catch (Exception e) {
+            System.err.println("❌ Error verificando favorito: " + e.getMessage());
+            return ResponseEntity.ok(Map.of("isFavorite", false));
+        }
+    }
+
+    // DTOs
+    public record AddFavoriteRequest(String placeId) {}
+}

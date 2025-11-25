@@ -1,0 +1,134 @@
+package com.eatsandthinks.demo.controller;
+
+import com.eatsandthinks.demo.entity.User;
+import com.eatsandthinks.demo.repository.UserRepository;
+import com.eatsandthinks.demo.service.ReviewService;
+import com.eatsandthinks.demo.service.ReviewService.ReviewCreationDTO;
+import com.eatsandthinks.demo.service.ReviewService.ReviewDTO;
+import com.eatsandthinks.demo.service.ReviewService.ReviewUpdateDTO;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:3000")
+public class ReviewController {
+
+    private final ReviewService reviewService;
+    private final UserRepository userRepository;
+
+    public ReviewController(ReviewService reviewService, UserRepository userRepository) {
+        this.reviewService = reviewService;
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * POST /api/reviews
+     * Crea una nueva reseña (requiere autenticación)
+     */
+    @PostMapping("/reviews")
+    public ResponseEntity<?> createReview(
+            @RequestBody ReviewCreationDTO reviewDto,
+            Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body(Map.of("message", "Debes iniciar sesión"));
+            }
+
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            // Crear DTO con el ID del usuario autenticado
+            ReviewCreationDTO dtoWithUser = new ReviewCreationDTO(
+                reviewDto.puntuacion(),
+                reviewDto.comentario(),
+                user.getId(),
+                reviewDto.localData()
+            );
+
+            ReviewDTO newReview = reviewService.createReview(dtoWithUser);
+            return ResponseEntity.status(201).body(newReview);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error creando reseña: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("message", "Error al crear reseña"));
+        }
+    }
+    
+    /**
+     * GET /api/locales/{placeId}/reviews
+     * Obtiene todas las reseñas de un local
+     */
+    @GetMapping("/locales/{placeId}/reviews")
+    public ResponseEntity<?> getReviewsByLocal(@PathVariable String placeId) {
+        try {
+            List<ReviewDTO> reviews = reviewService.getReviewsByLocalPlaceId(placeId);
+            return ResponseEntity.ok(reviews);
+        } catch (Exception e) {
+            System.err.println("❌ Error obteniendo reseñas: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("message", "Error al obtener reseñas"));
+        }
+    }
+
+    /**
+     * PUT /api/reviews/{reviewId}
+     * Actualiza una reseña existente (solo el autor)
+     */
+    @PutMapping("/reviews/{reviewId}")
+    public ResponseEntity<?> updateReview(
+            @PathVariable Long reviewId,
+            @RequestBody ReviewUpdateDTO dto,
+            Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body(Map.of("message", "Debes iniciar sesión"));
+            }
+
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            ReviewDTO updated = reviewService.updateReview(reviewId, dto, user.getId());
+            return ResponseEntity.ok(updated);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("❌ Error actualizando reseña: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("message", "Error al actualizar reseña"));
+        }
+    }
+
+    /**
+     * DELETE /api/reviews/{reviewId}
+     * Elimina una reseña (solo el autor)
+     */
+    @DeleteMapping("/reviews/{reviewId}")
+    public ResponseEntity<?> deleteReview(
+            @PathVariable Long reviewId,
+            Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body(Map.of("message", "Debes iniciar sesión"));
+            }
+
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            reviewService.deleteReview(reviewId, user.getId());
+            return ResponseEntity.ok(Map.of("message", "Reseña eliminada correctamente"));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("❌ Error eliminando reseña: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("message", "Error al eliminar reseña"));
+        }
+    }
+}

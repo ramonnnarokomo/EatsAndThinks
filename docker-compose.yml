@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # Base de datos MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: eatsandthinks-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: eatsandthinks
+      MYSQL_USER: eatsandthinks_user
+      MYSQL_PASSWORD: eatsandthinks_pass
+    ports:
+      - "3307:3306"  # Puerto 3307 en host para evitar conflictos
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - eatsandthinks-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Spring Boot
+  backend:
+    build:
+      context: ./eatsandthinks-backend
+      dockerfile: Dockerfile
+    container_name: eatsandthinks-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/eatsandthinks?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: eatsandthinks_user
+      SPRING_DATASOURCE_PASSWORD: eatsandthinks_pass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-AIzaSyBR3IASetMo2xse81KV0krscQWE6kEbIBo}
+    ports:
+      - "8080:8080"
+    networks:
+      - eatsandthinks-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend React + Nginx
+  frontend:
+    build:
+      context: ./EatsAndThinks Web Prototype
+      dockerfile: Dockerfile
+    container_name: eatsandthinks-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - eatsandthinks-network
+    environment:
+      VITE_API_URL: http://localhost:8080
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  eatsandthinks-network:
+    driver: bridge
+

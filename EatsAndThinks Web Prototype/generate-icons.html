@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generar Iconos PWA</title>
+</head>
+<body>
+    <h1>Generador de Iconos EatsAndThinks</h1>
+    <p>Abre la consola del navegador (F12) y descarga los iconos</p>
+    <canvas id="canvas192" width="192" height="192"></canvas>
+    <canvas id="canvas512" width="512" height="512"></canvas>
+
+    <script>
+        function createIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Fondo naranja degradado
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#f97316');
+            gradient.addColorStop(1, '#ea580c');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Emoji de comida
+            ctx.font = `${size * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🍽️', size / 2, size / 2);
+            
+            // Texto
+            ctx.font = `bold ${size * 0.12}px Arial`;
+            ctx.fillStyle = 'white';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 4;
+            ctx.fillText('EatsAndThinks', size / 2, size * 0.85);
+            
+            // Descargar
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `pwa-${size}x${size}.png`;
+                a.click();
+            });
+        }
+        
+        // Generar ambos iconos
+        setTimeout(() => createIcon('canvas192', 192), 100);
+        setTimeout(() => createIcon('canvas512', 512), 500);
+        
+        console.log('✅ Iconos generados! Revisa tus descargas.');
+    </script>
+</body>
+</html>
+

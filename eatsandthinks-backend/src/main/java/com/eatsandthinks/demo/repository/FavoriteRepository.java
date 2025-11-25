@@ -1,0 +1,14 @@
+package com.eatsandthinks.demo.repository;
+
+import com.eatsandthinks.demo.entity.Favorite;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+import java.util.Optional;
+
+public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
+    List<Favorite> findByUserId(Long userId);
+    Optional<Favorite> findByUserIdAndLocalId(Long userId, Long localId);
+    Optional<Favorite> findByUserIdAndPlaceId(Long userId, String placeId);
+    boolean existsByUserIdAndLocalId(Long userId, Long localId);
+    void deleteByUserIdAndLocalId(Long userId, Long localId);
+}
