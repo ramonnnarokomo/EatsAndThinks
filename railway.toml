@@ -1,6 +1,7 @@
 [build]
 builder = "dockerfile"
 dockerfilePath = "eatsandthinks-backend/Dockerfile"
+dockerContext = "eatsandthinks-backend"
 
 [deploy]
 startCommand = "java -jar app.jar"
