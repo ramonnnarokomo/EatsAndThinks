@@ -16,7 +16,7 @@ VALUES (
 );
 
 -- INSTRUCCIONES:
--- 1. Ejecuta este script en MySQL
+-- 1. Ejecuta este script en PostgreSQL
 -- 2. El admin se crea con password: "admin123"
 -- 3. Luego usa la aplicación para cambiar la contraseña desde el perfil
 -- 
@@ -25,6 +25,6 @@ VALUES (
 -- 1. POST http://localhost:8080/api/auth/register
 --    Body: {"nombre": "Administrator", "email": "admin@gmail.com", "password": "adminramon"}
 -- 
--- 2. Luego ejecuta en MySQL:
+-- 2. Luego ejecuta en PostgreSQL:
 --    UPDATE usuarios SET role = 'ADMIN' WHERE email = 'admin@gmail.com';
 
