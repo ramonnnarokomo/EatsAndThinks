@@ -44,6 +44,14 @@ public class AdminController {
         return user;
     }
 
+    private boolean isAdminRole(String role) {
+        return "ADMIN".equalsIgnoreCase(role) || "ROLE_ADMIN".equalsIgnoreCase(role);
+    }
+
+    private boolean isOtherAdmin(User actingAdmin, User target) {
+        return !actingAdmin.getId().equals(target.getId()) && isAdminRole(target.getRole());
+    }
+
     /**
      * GET /api/admin/users
      * Lista todos los usuarios (solo ADMIN)
@@ -87,10 +95,14 @@ public class AdminController {
             @RequestBody Map<String, String> body,
             Authentication authentication) {
         try {
-            validateAdmin(authentication);
+            User admin = validateAdmin(authentication);
             
             User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            if (isOtherAdmin(admin, user)) {
+                return ResponseEntity.status(403).body(Map.of("message", "❌ No puedes modificar el rol de otro administrador"));
+            }
             
             // Proteger al usuario "Administrator" de cambios de rol
             if ("Administrator".equalsIgnoreCase(user.getNombre()) || 
@@ -131,10 +143,14 @@ public class AdminController {
             @RequestBody Map<String, Boolean> body,
             Authentication authentication) {
         try {
-            validateAdmin(authentication);
+            User admin = validateAdmin(authentication);
             
             User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            if (isOtherAdmin(admin, user)) {
+                return ResponseEntity.status(403).body(Map.of("message", "❌ No puedes banear a otro administrador"));
+            }
             
             // Proteger al usuario "Administrator" de ser baneado
             if ("Administrator".equalsIgnoreCase(user.getNombre()) || 
@@ -166,10 +182,14 @@ public class AdminController {
             @RequestBody Map<String, Boolean> body,
             Authentication authentication) {
         try {
-            validateAdmin(authentication);
+            User admin = validateAdmin(authentication);
             
             User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            if (isOtherAdmin(admin, user)) {
+                return ResponseEntity.status(403).body(Map.of("message", "❌ No puedes modificar los permisos de reseña de otro administrador"));
+            }
             
             // Proteger al usuario "Administrator" de cambios en permisos
             if ("Administrator".equalsIgnoreCase(user.getNombre()) || 
@@ -202,10 +222,14 @@ public class AdminController {
             @PathVariable Long userId,
             Authentication authentication) {
         try {
-            validateAdmin(authentication);
+            User admin = validateAdmin(authentication);
             
             User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            if (isOtherAdmin(admin, user)) {
+                return ResponseEntity.status(403).body(Map.of("message", "❌ No puedes eliminar a otro administrador"));
+            }
             
             // Proteger al usuario "Administrator" de ser eliminado
             if ("Administrator".equalsIgnoreCase(user.getNombre()) || 
@@ -214,7 +238,6 @@ public class AdminController {
             }
             
             // No permitir que un admin se elimine a sí mismo
-            User admin = validateAdmin(authentication);
             if (admin.getId().equals(userId)) {
                 return ResponseEntity.status(400).body(Map.of("message", "No puedes eliminarte a ti mismo"));
             }

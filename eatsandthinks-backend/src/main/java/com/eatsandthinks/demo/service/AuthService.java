@@ -28,6 +28,10 @@ public class AuthService {
             throw new RuntimeException("El email ya está registrado");
         }
 
+        if (userRepository.existsByNombreIgnoreCase(request.nombre())) {
+            throw new RuntimeException("El nombre de usuario ya está en uso");
+        }
+
         // 2. Crear el nuevo usuario
         User newUser = new User();
         newUser.setNombre(request.nombre());
