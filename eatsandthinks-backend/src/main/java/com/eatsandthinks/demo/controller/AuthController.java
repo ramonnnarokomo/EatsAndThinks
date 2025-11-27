@@ -129,8 +129,8 @@ public class AuthController {
     @PostMapping("/unlock")
     public ResponseEntity<?> unlockAccount(@RequestBody UnlockRequest request) {
         try {
-            authService.unlockWithPin(request.email(), request.pin());
-            return ResponseEntity.ok(Map.of("message", "Cuenta desbloqueada. Ya puedes iniciar sesión."));
+            var response = authService.unlockWithPin(request.email(), request.pin());
+            return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {
             return ResponseEntity.status(400).body(Map.of("message", ex.getMessage()));
         }
