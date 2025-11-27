@@ -32,6 +32,10 @@ public class AuthService {
             throw new RuntimeException("El nombre de usuario ya está en uso");
         }
 
+        if (request.recoveryPin() == null || request.recoveryPin().length() < 4 || request.recoveryPin().length() > 8) {
+            throw new RuntimeException("El PIN debe tener entre 4 y 8 dígitos");
+        }
+
         // 2. Crear el nuevo usuario
         User newUser = new User();
         newUser.setNombre(request.nombre());
@@ -39,6 +43,9 @@ public class AuthService {
         // 3. Cifrar la contraseña ANTES de guardar
         newUser.setPassword(passwordEncoder.encode(request.password()));
         newUser.setRole("USER");
+        newUser.setRecoveryPin(passwordEncoder.encode(request.recoveryPin()));
+        newUser.setFailedLoginAttempts(0);
+        newUser.setTemporaryLock(false);
 
         // 4. Guardar en la BD
         userRepository.save(newUser);
@@ -48,6 +55,18 @@ public class AuthService {
 
         System.out.println("✅ Usuario registrado: " + request.email());
         return new AuthResponse("Registro exitoso", token);
+    }
+
+    public void unlockWithPin(String email, String pin) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        if (user.getRecoveryPin() == null || !passwordEncoder.matches(pin, user.getRecoveryPin())) {
+            throw new RuntimeException("PIN inválido");
+        }
+        user.setFailedLoginAttempts(0);
+        user.setTemporaryLock(false);
+        user.setBanned(false);
+        userRepository.save(user);
     }
 
     /**
@@ -109,7 +128,8 @@ public class AuthService {
     }
 
     // ========== DTOs ==========
-    public record RegisterRequest(String nombre, String email, String password) {}
+    public record RegisterRequest(String nombre, String email, String password, String recoveryPin) {}
     public record LoginRequest(String email, String password) {}
+    public record UnlockRequest(String email, String pin) {}
     public record AuthResponse(String message, String jwtToken) {}
 }

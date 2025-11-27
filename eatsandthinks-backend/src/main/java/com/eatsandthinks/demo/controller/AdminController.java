@@ -49,7 +49,21 @@ public class AdminController {
     }
 
     private boolean isOtherAdmin(User actingAdmin, User target) {
+        if (actingAdmin == null || target == null) {
+            return false;
+        }
+        if (isSuperAdmin(actingAdmin)) {
+            return false;
+        }
         return !actingAdmin.getId().equals(target.getId()) && isAdminRole(target.getRole());
+    }
+
+    private boolean isSuperAdmin(User user) {
+        if (user == null) {
+            return false;
+        }
+        return "Administrator".equalsIgnoreCase(user.getNombre()) ||
+               "admin@gmail.com".equalsIgnoreCase(user.getEmail());
     }
 
     /**
@@ -104,9 +118,8 @@ public class AdminController {
                 return ResponseEntity.status(403).body(Map.of("message", "❌ No puedes modificar el rol de otro administrador"));
             }
             
-            // Proteger al usuario "Administrator" de cambios de rol
-            if ("Administrator".equalsIgnoreCase(user.getNombre()) || 
-                "admin@gmail.com".equalsIgnoreCase(user.getEmail())) {
+            // Proteger al usuario "Administrator" de cambios de rol por otros admins
+            if (!isSuperAdmin(admin) && isSuperAdmin(user)) {
                 return ResponseEntity.status(403).body(Map.of("message", "❌ No se puede cambiar el rol del usuario Administrator"));
             }
             
@@ -152,9 +165,8 @@ public class AdminController {
                 return ResponseEntity.status(403).body(Map.of("message", "❌ No puedes banear a otro administrador"));
             }
             
-            // Proteger al usuario "Administrator" de ser baneado
-            if ("Administrator".equalsIgnoreCase(user.getNombre()) || 
-                "admin@gmail.com".equalsIgnoreCase(user.getEmail())) {
+            // Proteger al usuario "Administrator" de ser baneado por otros admins
+            if (!isSuperAdmin(admin) && isSuperAdmin(user)) {
                 return ResponseEntity.status(403).body(Map.of("message", "❌ No se puede banear al usuario Administrator"));
             }
             
@@ -191,9 +203,8 @@ public class AdminController {
                 return ResponseEntity.status(403).body(Map.of("message", "❌ No puedes modificar los permisos de reseña de otro administrador"));
             }
             
-            // Proteger al usuario "Administrator" de cambios en permisos
-            if ("Administrator".equalsIgnoreCase(user.getNombre()) || 
-                "admin@gmail.com".equalsIgnoreCase(user.getEmail())) {
+            // Proteger al usuario "Administrator" de cambios en permisos por otros admins
+            if (!isSuperAdmin(admin) && isSuperAdmin(user)) {
                 return ResponseEntity.status(403).body(Map.of("message", "❌ No se pueden modificar los permisos del usuario Administrator"));
             }
             
@@ -231,9 +242,8 @@ public class AdminController {
                 return ResponseEntity.status(403).body(Map.of("message", "❌ No puedes eliminar a otro administrador"));
             }
             
-            // Proteger al usuario "Administrator" de ser eliminado
-            if ("Administrator".equalsIgnoreCase(user.getNombre()) || 
-                "admin@gmail.com".equalsIgnoreCase(user.getEmail())) {
+            // Proteger al usuario "Administrator" de ser eliminado por otros admins
+            if (!isSuperAdmin(admin) && isSuperAdmin(user)) {
                 return ResponseEntity.status(403).body(Map.of("message", "❌ No se puede eliminar al usuario Administrator"));
             }
             

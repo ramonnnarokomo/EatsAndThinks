@@ -5,12 +5,15 @@ import com.eatsandthinks.demo.repository.UserRepository;
 import com.eatsandthinks.demo.service.AuthService;
 import com.eatsandthinks.demo.service.AuthService.LoginRequest;
 import com.eatsandthinks.demo.service.AuthService.RegisterRequest;
+import com.eatsandthinks.demo.service.AuthService.UnlockRequest;
 import com.eatsandthinks.demo.security.JwtUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -20,19 +23,24 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    private static final int MAX_LOGIN_ATTEMPTS = 3;
+
     private final AuthService authService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthController(AuthService authService,
                           AuthenticationManager authenticationManager,
                           JwtUtils jwtUtils,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          PasswordEncoder passwordEncoder) {
         this.authService = authService;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -51,17 +59,62 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
+        User user = userRepository.findByEmail(request.email()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "Credenciales inválidas"));
+        }
+
+        if (Boolean.TRUE.equals(user.getBanned())) {
+            return ResponseEntity.status(403).body(Map.of("message", "Cuenta bloqueada. Contacta con soporte."));
+        }
+
+        if (Boolean.TRUE.equals(user.getTemporaryLock())) {
+            return ResponseEntity.status(403).body(Map.of(
+                "message", "Cuenta bloqueada temporalmente. Usa tu PIN de recuperación para desbloquearla.",
+                "locked", true
+            ));
+        }
+
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            return failedLoginResponse(user);
+        }
+
+        try {
+            Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            user.setFailedLoginAttempts(0);
+            userRepository.save(user);
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateToken(authentication.getName());
+            String jwt = jwtUtils.generateToken(authentication.getName());
+            Map<String, Object> body = new HashMap<>();
+            body.put("jwtToken", jwt);
+            body.put("message", "OK");
+            return ResponseEntity.ok(body);
+        } catch (AuthenticationException e) {
+            return failedLoginResponse(user);
+        }
+    }
 
-        Map<String, String> body = new HashMap<>();
-        body.put("jwtToken", jwt);
-        body.put("message", "OK");
-        return ResponseEntity.ok(body);
+    private ResponseEntity<?> failedLoginResponse(User user) {
+        Integer attempts = user.getFailedLoginAttempts() == null ? 0 : user.getFailedLoginAttempts();
+        attempts++;
+        user.setFailedLoginAttempts(attempts);
+        boolean locked = attempts >= MAX_LOGIN_ATTEMPTS;
+        if (locked) {
+            user.setTemporaryLock(true);
+        }
+        userRepository.save(user);
+        int remaining = Math.max(0, MAX_LOGIN_ATTEMPTS - attempts);
+        String message = locked
+            ? "Tu cuenta ha sido bloqueada por múltiples intentos fallidos."
+            : "Credenciales incorrectas. Intentos restantes: " + remaining;
+        return ResponseEntity.status(locked ? 403 : 401).body(Map.of(
+            "message", message,
+            "attemptsLeft", remaining,
+            "locked", locked
+        ));
     }
 
     /**
@@ -71,6 +124,16 @@ public class AuthController {
     @PostMapping("/guest")
     public ResponseEntity<?> guestLogin() {
         return authService.createGuestSession();
+    }
+
+    @PostMapping("/unlock")
+    public ResponseEntity<?> unlockAccount(@RequestBody UnlockRequest request) {
+        try {
+            authService.unlockWithPin(request.email(), request.pin());
+            return ResponseEntity.ok(Map.of("message", "Cuenta desbloqueada. Ya puedes iniciar sesión."));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(400).body(Map.of("message", ex.getMessage()));
+        }
     }
 
     /**
