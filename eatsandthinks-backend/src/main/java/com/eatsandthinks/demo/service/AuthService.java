@@ -54,10 +54,10 @@ public class AuthService {
         String token = jwtUtils.generateToken(newUser.getEmail());
 
         System.out.println("✅ Usuario registrado: " + request.email());
-        return new AuthResponse("Registro exitoso", token);
+        return new AuthResponse("Registro exitoso", token, newUser.getEmail(), newUser.getRole());
     }
 
-    public void unlockWithPin(String email, String pin) {
+    public AuthResponse unlockWithPin(String email, String pin) {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         if (user.getRecoveryPin() == null || !passwordEncoder.matches(pin, user.getRecoveryPin())) {
@@ -67,6 +67,8 @@ public class AuthService {
         user.setTemporaryLock(false);
         user.setBanned(false);
         userRepository.save(user);
+        String token = jwtUtils.generateToken(user.getEmail());
+        return new AuthResponse("Cuenta desbloqueada", token, user.getEmail(), user.getRole());
     }
 
     /**
@@ -86,7 +88,7 @@ public class AuthService {
         }
 
         String token = jwtUtils.generateToken(user.getEmail());
-        return new AuthResponse("Login exitoso", token);
+        return new AuthResponse("Login exitoso", token, user.getEmail(), user.getRole());
     }
 
     /**
@@ -131,5 +133,5 @@ public class AuthService {
     public record RegisterRequest(String nombre, String email, String password, String recoveryPin) {}
     public record LoginRequest(String email, String password) {}
     public record UnlockRequest(String email, String pin) {}
-    public record AuthResponse(String message, String jwtToken) {}
+    public record AuthResponse(String message, String jwtToken, String email, String role) {}
 }
