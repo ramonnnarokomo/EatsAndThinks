@@ -32,6 +32,13 @@ public class User {
 	@Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
 	private Boolean canReview = true;
 
+	@Column(nullable = false, columnDefinition = "INT DEFAULT 0")
+	private Integer failedLoginAttempts = 0;
+
+	private Boolean temporaryLock = false;
+
+	private String recoveryPin;
+
 	private LocalDateTime createdAt = LocalDateTime.now();
 
 	// getters & setters
@@ -97,5 +104,29 @@ public class User {
 
 	public void setCanReview(Boolean canReview) {
 		this.canReview = canReview;
+	}
+
+	public Integer getFailedLoginAttempts() {
+		return failedLoginAttempts;
+	}
+
+	public void setFailedLoginAttempts(Integer failedLoginAttempts) {
+		this.failedLoginAttempts = failedLoginAttempts;
+	}
+
+	public Boolean getTemporaryLock() {
+		return temporaryLock;
+	}
+
+	public void setTemporaryLock(Boolean temporaryLock) {
+		this.temporaryLock = temporaryLock;
+	}
+
+	public String getRecoveryPin() {
+		return recoveryPin;
+	}
+
+	public void setRecoveryPin(String recoveryPin) {
+		this.recoveryPin = recoveryPin;
 	}
 }
