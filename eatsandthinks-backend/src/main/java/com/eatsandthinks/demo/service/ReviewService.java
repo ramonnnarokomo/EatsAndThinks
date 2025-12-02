@@ -5,6 +5,7 @@ import com.eatsandthinks.demo.entity.Review;
 import com.eatsandthinks.demo.entity.User;
 import com.eatsandthinks.demo.repository.LocalRepository;
 import com.eatsandthinks.demo.repository.ReviewRepository;
+import com.eatsandthinks.demo.repository.ReviewReplyRepository;
 import com.eatsandthinks.demo.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,13 +19,16 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final LocalRepository localRepository;
     private final UserRepository userRepository;
+    private final ReviewReplyRepository reviewReplyRepository;
 
     public ReviewService(ReviewRepository reviewRepository, 
                         LocalRepository localRepository,
-                        UserRepository userRepository) {
+                        UserRepository userRepository,
+                        ReviewReplyRepository reviewReplyRepository) {
         this.reviewRepository = reviewRepository;
         this.localRepository = localRepository;
         this.userRepository = userRepository;
+        this.reviewReplyRepository = reviewReplyRepository;
     }
 
     /**
@@ -70,7 +74,9 @@ public class ReviewService {
             savedReview.getFecha(),
             savedReview.getUserId(),
             user.getNombre(),
-            local.getPlaceId()
+            local.getPlaceId(),
+            local.getNombre(),
+            0L
         );
     }
 
@@ -91,6 +97,7 @@ public class ReviewService {
             .map(r -> {
                 User user = userRepository.findById(r.getUserId()).orElse(null);
                 String authorName = user != null ? user.getNombre() : "Usuario Anónimo";
+                long replyCount = reviewReplyRepository.countByReviewId(r.getId());
                 return new ReviewDTO(
                     r.getId(),
                     r.getPuntuacion(),
@@ -98,7 +105,9 @@ public class ReviewService {
                     r.getFecha(),
                     r.getUserId(),
                     authorName,
-                    placeId
+                    placeId,
+                    local.getNombre(),
+                    replyCount
                 );
             })
             .collect(Collectors.toList());
@@ -114,6 +123,7 @@ public class ReviewService {
             .map(r -> {
                 LocalEntity local = localRepository.findById(r.getLocalId()).orElse(null);
                 User user = userRepository.findById(r.getUserId()).orElse(null);
+                long replyCount = reviewReplyRepository.countByReviewId(r.getId());
                 return new ReviewDTO(
                     r.getId(),
                     r.getPuntuacion(),
@@ -122,7 +132,8 @@ public class ReviewService {
                     r.getUserId(),
                     user != null ? user.getNombre() : "Usuario",
                     local != null ? local.getPlaceId() : null,
-                    local != null ? local.getNombre() : "Local eliminado"
+                    local != null ? local.getNombre() : "Local eliminado",
+                    replyCount
                 );
             })
             .collect(Collectors.toList());
@@ -149,6 +160,7 @@ public class ReviewService {
         User user = userRepository.findById(updated.getUserId()).orElse(null);
         LocalEntity local = localRepository.findById(updated.getLocalId()).orElse(null);
         System.out.println("✅ Reseña actualizada");
+        long replyCount = reviewReplyRepository.countByReviewId(updated.getId());
         return new ReviewDTO(
             updated.getId(),
             updated.getPuntuacion(),
@@ -156,7 +168,9 @@ public class ReviewService {
             updated.getFecha(),
             updated.getUserId(),
             user != null ? user.getNombre() : "Usuario",
-            local != null ? local.getPlaceId() : null
+            local != null ? local.getPlaceId() : null,
+            local != null ? local.getNombre() : null,
+            replyCount
         );
     }
 
@@ -222,10 +236,14 @@ public class ReviewService {
         Long userId,
         String author,
         String placeId,
-        String restaurantName
+        String restaurantName,
+        long replyCount
     ) {
         public ReviewDTO(Long reviewId, Integer puntuacion, String comentario, LocalDateTime fecha, Long userId, String author, String placeId) {
-            this(reviewId, puntuacion, comentario, fecha, userId, author, placeId, null);
+            this(reviewId, puntuacion, comentario, fecha, userId, author, placeId, null, 0L);
+        }
+        public ReviewDTO(Long reviewId, Integer puntuacion, String comentario, LocalDateTime fecha, Long userId, String author, String placeId, String restaurantName) {
+            this(reviewId, puntuacion, comentario, fecha, userId, author, placeId, restaurantName, 0L);
         }
     }
     public record ReviewUpdateDTO(
