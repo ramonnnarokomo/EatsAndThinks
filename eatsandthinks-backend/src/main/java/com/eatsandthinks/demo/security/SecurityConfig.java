@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -38,12 +39,14 @@ public class SecurityConfig {
                     "/v3/api-docs/**",        // Swagger
                     "/swagger-ui/**"          // Swagger UI
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/reviews/*/replies").permitAll()
                 // Rutas que requieren autenticación
                 .requestMatchers(
                     "/api/users/**",          // Usuario actual
                     "/api/favorites/**",      // Favoritos
                     "/api/reviews/**",        // Reviews (crear/editar/eliminar)
-                    "/api/search-history/**"  // Historial de búsquedas
+                    "/api/search-history/**", // Historial de búsquedas
+                    "/api/notifications/**"   // Notificaciones
                 ).authenticated()
                 // Rutas solo para ADMIN
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
