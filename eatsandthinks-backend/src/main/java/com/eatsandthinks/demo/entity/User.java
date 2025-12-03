@@ -41,6 +41,8 @@ public class User {
 
 	private LocalDateTime createdAt = LocalDateTime.now();
 
+	private LocalDateTime lastLoginAt;
+
 	// getters & setters
 	public Long getId() {
 		return id;
@@ -88,6 +90,14 @@ public class User {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public LocalDateTime getLastLoginAt() {
+		return lastLoginAt;
+	}
+
+	public void setLastLoginAt(LocalDateTime lastLoginAt) {
+		this.lastLoginAt = lastLoginAt;
 	}
 
 	public Boolean getBanned() {

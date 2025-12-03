@@ -86,6 +86,7 @@ public class AdminController {
                     data.put("banned", u.getBanned());
                     data.put("canReview", u.getCanReview());
                     data.put("createdAt", u.getCreatedAt());
+                    data.put("lastLoginAt", u.getLastLoginAt());
                     return data;
                 })
                 .collect(Collectors.toList());
