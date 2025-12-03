@@ -36,6 +36,7 @@ public class SecurityConfig {
                     "/api/locales/**",        // Locales públicos
                     "/api/places/**",         // Places públicos
                     "/api/config/**",         // Configuración
+                    "/media/**",              // Archivos estáticos (avatares)
                     "/v3/api-docs/**",        // Swagger
                     "/swagger-ui/**"          // Swagger UI
                 ).permitAll()
