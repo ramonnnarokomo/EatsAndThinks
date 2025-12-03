@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 public class AdminController {
 
     private final UserRepository userRepository;
@@ -366,6 +365,28 @@ public class AdminController {
             return ResponseEntity.status(403).body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("message", "Error al obtener reseñas"));
+        }
+    }
+
+    @DeleteMapping("/locals/{localId}")
+    public ResponseEntity<?> deleteCommunityLocal(@PathVariable Long localId, Authentication authentication) {
+        try {
+            User admin = validateAdmin(authentication);
+            if (!isSuperAdmin(admin)) {
+                return ResponseEntity.status(403).body(Map.of("message", "Solo el superadministrador puede eliminar locales de la comunidad"));
+            }
+            LocalEntity local = localRepository.findById(localId)
+                .orElseThrow(() -> new RuntimeException("Local no encontrado"));
+            if (local.getSource() != LocalEntity.Source.LOCAL) {
+                return ResponseEntity.status(400).body(Map.of("message", "Solo se pueden eliminar locales creados por la comunidad"));
+            }
+            localRepository.delete(local);
+            return ResponseEntity.ok(Map.of("message", "Local eliminado"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("❌ Error eliminando local: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("message", "Error al eliminar local"));
         }
     }
 

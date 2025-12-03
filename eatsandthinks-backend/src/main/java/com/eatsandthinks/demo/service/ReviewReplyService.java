@@ -1,6 +1,7 @@
 package com.eatsandthinks.demo.service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,8 @@ import com.eatsandthinks.demo.repository.UserRepository;
 
 @Service
 public class ReviewReplyService {
+
+    private static final ZoneId DEFAULT_ZONE = ZoneId.of("Europe/Madrid");
 
     private final ReviewReplyRepository reviewReplyRepository;
     private final ReviewRepository reviewRepository;
@@ -63,7 +66,7 @@ public class ReviewReplyService {
         reply.setReviewId(reviewId);
         reply.setAuthorId(authorId);
         reply.setContent(sanitizedContent);
-        reply.setCreatedAt(LocalDateTime.now());
+        reply.setCreatedAt(LocalDateTime.now(DEFAULT_ZONE));
 
         ReviewReply savedReply = reviewReplyRepository.save(reply);
 

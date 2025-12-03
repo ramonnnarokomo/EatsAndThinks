@@ -1,6 +1,7 @@
 package com.eatsandthinks.demo.service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import com.eatsandthinks.demo.repository.ReviewReplyNotificationRepository;
 public class ReviewReplyNotificationService {
 
     private final ReviewReplyNotificationRepository notificationRepository;
+    private static final ZoneId DEFAULT_ZONE = ZoneId.of("Europe/Madrid");
 
     public ReviewReplyNotificationService(ReviewReplyNotificationRepository notificationRepository) {
         this.notificationRepository = notificationRepository;
@@ -42,7 +44,7 @@ public class ReviewReplyNotificationService {
         notification.setPlaceName(local != null ? local.getNombre() : null);
         notification.setReviewSnippet(buildSnippet(review.getComentario()));
         notification.setReplySnippet(buildSnippet(reply.getContent()));
-        notification.setCreatedAt(LocalDateTime.now());
+        notification.setCreatedAt(LocalDateTime.now(DEFAULT_ZONE));
         notificationRepository.save(notification);
     }
 

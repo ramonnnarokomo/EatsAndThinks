@@ -13,7 +13,6 @@ import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api/places")
-@CrossOrigin(origins = "http://localhost:3000")
 public class GooglePlacesController {
 
     private final GooglePlacesService googlePlacesService;
