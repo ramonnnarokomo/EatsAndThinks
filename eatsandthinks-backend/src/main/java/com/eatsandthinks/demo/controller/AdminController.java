@@ -87,6 +87,7 @@ public class AdminController {
                     data.put("canReview", u.getCanReview());
                     data.put("createdAt", u.getCreatedAt());
                     data.put("lastLoginAt", u.getLastLoginAt());
+                    data.put("profileImageUrl", u.getProfileImageUrl());
                     return data;
                 })
                 .collect(Collectors.toList());
