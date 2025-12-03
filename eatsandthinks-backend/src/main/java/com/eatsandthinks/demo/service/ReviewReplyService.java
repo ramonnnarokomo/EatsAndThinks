@@ -90,7 +90,8 @@ public class ReviewReplyService {
             reply.getAuthorId(),
             author != null ? author.getNombre() : "Usuario",
             reply.getContent(),
-            reply.getCreatedAt()
+            reply.getCreatedAt(),
+            author != null ? author.getProfileImageUrl() : null
         );
     }
 
@@ -102,7 +103,8 @@ public class ReviewReplyService {
         Long authorId,
         String authorName,
         String content,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String authorAvatarUrl
     ) {}
 }
 
