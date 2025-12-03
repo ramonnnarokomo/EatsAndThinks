@@ -14,7 +14,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/search-history")
-@CrossOrigin(origins = "*")
 public class SearchHistoryController {
 
     @Autowired

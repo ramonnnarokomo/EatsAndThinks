@@ -16,7 +16,6 @@ import com.eatsandthinks.demo.service.GooglePlacesService.PlaceDetails;
 
 @RestController
 @RequestMapping("/api/locales")
-@CrossOrigin(origins = "http://localhost:3000")
 public class LocalController {
 
     @Autowired

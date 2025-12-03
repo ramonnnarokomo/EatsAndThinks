@@ -23,7 +23,6 @@ import java.nio.file.StandardCopyOption;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
 
     private final UserRepository userRepository;
@@ -238,6 +237,35 @@ public ResponseEntity<?> updateCurrentUser(
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("message", "No se pudo subir la imagen de perfil"));
+        }
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<?> deleteCurrentUser(Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body(Map.of("message", "No autenticado"));
+            }
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            String existingAvatar = user.getProfileImageUrl();
+            if (existingAvatar != null && existingAvatar.contains("/media/")) {
+                String cleaned = existingAvatar.substring(existingAvatar.indexOf("/media/") + "/media/".length());
+                Path avatarPath = Paths.get(mediaBaseDir).resolve(cleaned).normalize();
+                try {
+                    Files.deleteIfExists(avatarPath);
+                } catch (Exception ignored) {}
+            }
+
+            userRepository.delete(user);
+            return ResponseEntity.ok(Map.of("message", "Cuenta eliminada correctamente"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("❌ Error eliminando usuario: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("message", "Error al eliminar cuenta"));
         }
     }
 }
