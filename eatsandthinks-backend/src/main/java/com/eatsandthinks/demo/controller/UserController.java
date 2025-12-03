@@ -3,14 +3,23 @@ package com.eatsandthinks.demo.controller;
 import com.eatsandthinks.demo.entity.User;
 import com.eatsandthinks.demo.repository.UserRepository;
 import com.eatsandthinks.demo.service.ReviewService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 @RestController
 @RequestMapping("/api/users")
@@ -20,6 +29,8 @@ public class UserController {
     private final UserRepository userRepository;
     private final ReviewService reviewService;
     private final PasswordEncoder passwordEncoder;
+    @Value("${app.media.base-dir:uploads}")
+    private String mediaBaseDir;
 
     public UserController(UserRepository userRepository, 
                          ReviewService reviewService,
@@ -57,6 +68,8 @@ public class UserController {
             response.put("createdAt", user.getCreatedAt());
             response.put("totalReviews", userReviews.size());
             response.put("avgRating", avgRating);
+            response.put("lastLoginAt", user.getLastLoginAt());
+            response.put("profileImageUrl", user.getProfileImageUrl());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             System.err.println("❌ Error obteniendo usuario: " + e.getMessage());
@@ -150,8 +163,9 @@ public ResponseEntity<?> updateCurrentUser(
         response.put("id", updatedUser.getId());
         response.put("nombre", updatedUser.getNombre());
         response.put("email", updatedUser.getEmail());
+        response.put("profileImageUrl", updatedUser.getProfileImageUrl());
         response.put("message", "Perfil actualizado correctamente");
-        response.put("emailChanged", emailChanged); // 🔥 AVISAMOS AL FRONTEND
+        response.put("emailChanged", emailChanged);
         
         return ResponseEntity.ok(response);
     } catch (Exception e) {
@@ -167,4 +181,63 @@ public ResponseEntity<?> updateCurrentUser(
         String currentPassword,
         String newPassword
     ) {}
+
+    @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadProfileImage(@RequestParam("file") MultipartFile file,
+                                                Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body(Map.of("message", "No autenticado"));
+            }
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "El archivo es requerido"));
+            }
+            if (file.getSize() > 5 * 1024 * 1024) {
+                return ResponseEntity.badRequest().body(Map.of("message", "El archivo excede el tamaño máximo de 5MB"));
+            }
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Formato de archivo no soportado"));
+            }
+
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            Path avatarDir = Paths.get(mediaBaseDir, "avatars").toAbsolutePath().normalize();
+            Files.createDirectories(avatarDir);
+
+            String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+            if (extension == null || extension.isBlank()) {
+                extension = "png";
+            }
+            String filename = "user-" + user.getId() + "-" + System.currentTimeMillis() + "." + extension;
+            Path target = avatarDir.resolve(filename);
+            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+
+            String existingAvatar = user.getProfileImageUrl();
+            if (existingAvatar != null && existingAvatar.contains("/media/")) {
+                String cleaned = existingAvatar.substring(existingAvatar.indexOf("/media/") + "/media/".length());
+                Path oldPath = Paths.get(mediaBaseDir).resolve(cleaned).normalize();
+                try {
+                    if (Files.exists(oldPath)) {
+                        Files.delete(oldPath);
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            String relativePath = "/media/avatars/" + filename;
+            String publicUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path(relativePath)
+                .toUriString();
+
+            user.setProfileImageUrl(publicUrl);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(Map.of("profileImageUrl", publicUrl));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("message", "No se pudo subir la imagen de perfil"));
+        }
+    }
 }

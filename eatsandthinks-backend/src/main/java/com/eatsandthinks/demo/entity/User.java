@@ -43,6 +43,9 @@ public class User {
 
 	private LocalDateTime lastLoginAt;
 
+    @Column(length = 500)
+    private String profileImageUrl;
+
 	// getters & setters
 	public Long getId() {
 		return id;
@@ -99,6 +102,14 @@ public class User {
 	public void setLastLoginAt(LocalDateTime lastLoginAt) {
 		this.lastLoginAt = lastLoginAt;
 	}
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
 
 	public Boolean getBanned() {
 		return banned;

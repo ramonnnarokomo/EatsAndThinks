@@ -76,6 +76,7 @@ public class ReviewService {
             user.getNombre(),
             local.getPlaceId(),
             local.getNombre(),
+            user.getProfileImageUrl(),
             0L
         );
     }
@@ -98,6 +99,7 @@ public class ReviewService {
                 User user = userRepository.findById(r.getUserId()).orElse(null);
                 String authorName = user != null ? user.getNombre() : "Usuario Anónimo";
                 long replyCount = reviewReplyRepository.countByReviewId(r.getId());
+                String authorAvatar = user != null ? user.getProfileImageUrl() : null;
                 return new ReviewDTO(
                     r.getId(),
                     r.getPuntuacion(),
@@ -107,6 +109,7 @@ public class ReviewService {
                     authorName,
                     placeId,
                     local.getNombre(),
+                    authorAvatar,
                     replyCount
                 );
             })
@@ -124,6 +127,7 @@ public class ReviewService {
                 LocalEntity local = localRepository.findById(r.getLocalId()).orElse(null);
                 User user = userRepository.findById(r.getUserId()).orElse(null);
                 long replyCount = reviewReplyRepository.countByReviewId(r.getId());
+                String authorAvatar = user != null ? user.getProfileImageUrl() : null;
                 return new ReviewDTO(
                     r.getId(),
                     r.getPuntuacion(),
@@ -133,6 +137,7 @@ public class ReviewService {
                     user != null ? user.getNombre() : "Usuario",
                     local != null ? local.getPlaceId() : null,
                     local != null ? local.getNombre() : "Local eliminado",
+                    authorAvatar,
                     replyCount
                 );
             })
@@ -161,6 +166,7 @@ public class ReviewService {
         LocalEntity local = localRepository.findById(updated.getLocalId()).orElse(null);
         System.out.println("✅ Reseña actualizada");
         long replyCount = reviewReplyRepository.countByReviewId(updated.getId());
+        String authorAvatar = user != null ? user.getProfileImageUrl() : null;
         return new ReviewDTO(
             updated.getId(),
             updated.getPuntuacion(),
@@ -170,6 +176,7 @@ public class ReviewService {
             user != null ? user.getNombre() : "Usuario",
             local != null ? local.getPlaceId() : null,
             local != null ? local.getNombre() : null,
+            authorAvatar,
             replyCount
         );
     }
@@ -237,13 +244,14 @@ public class ReviewService {
         String author,
         String placeId,
         String restaurantName,
+        String authorAvatarUrl,
         long replyCount
     ) {
         public ReviewDTO(Long reviewId, Integer puntuacion, String comentario, LocalDateTime fecha, Long userId, String author, String placeId) {
-            this(reviewId, puntuacion, comentario, fecha, userId, author, placeId, null, 0L);
+            this(reviewId, puntuacion, comentario, fecha, userId, author, placeId, null, null, 0L);
         }
         public ReviewDTO(Long reviewId, Integer puntuacion, String comentario, LocalDateTime fecha, Long userId, String author, String placeId, String restaurantName) {
-            this(reviewId, puntuacion, comentario, fecha, userId, author, placeId, restaurantName, 0L);
+            this(reviewId, puntuacion, comentario, fecha, userId, author, placeId, restaurantName, null, 0L);
         }
     }
     public record ReviewUpdateDTO(
