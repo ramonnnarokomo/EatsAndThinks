@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -86,7 +87,7 @@ public class AuthController {
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
             user.setFailedLoginAttempts(0);
-            user.setLastLoginAt(LocalDateTime.now());
+            user.setLastLoginAt(LocalDateTime.now(ZoneId.of("Europe/Madrid")));
             userRepository.save(user);
 
             String jwt = jwtUtils.generateToken(authentication.getName());

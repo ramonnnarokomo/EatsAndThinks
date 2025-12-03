@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 public class AuthService {
@@ -20,6 +21,8 @@ public class AuthService {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    private static final ZoneId DEFAULT_ZONE = ZoneId.of("Europe/Madrid");
 
     /**
      * REGISTRO DE USUARIO
@@ -50,7 +53,7 @@ public class AuthService {
         newUser.setTemporaryLock(false);
 
         // 4. Guardar en la BD
-        newUser.setLastLoginAt(LocalDateTime.now());
+        newUser.setLastLoginAt(LocalDateTime.now(DEFAULT_ZONE));
         userRepository.save(newUser);
 
         // 5. Generar token JWT
@@ -110,7 +113,7 @@ public class AuthService {
             guestUser.setRole("GUEST");
             guestUser.setCanReview(false); // Los invitados no pueden publicar
             guestUser.setBanned(false);
-            guestUser.setLastLoginAt(LocalDateTime.now());
+            guestUser.setLastLoginAt(LocalDateTime.now(DEFAULT_ZONE));
             
             userRepository.save(guestUser);
             
