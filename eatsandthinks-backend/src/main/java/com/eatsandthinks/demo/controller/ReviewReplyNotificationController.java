@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,7 +17,6 @@ import com.eatsandthinks.demo.service.ReviewReplyNotificationService;
 
 @RestController
 @RequestMapping("/api/notifications/review-replies")
-@CrossOrigin(origins = "http://localhost:3000")
 public class ReviewReplyNotificationController {
 
     private final ReviewReplyNotificationService notificationService;
