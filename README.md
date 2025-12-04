@@ -1,6 +1,8 @@
 # 🍽️ EatsAndThinks
 
 > Descubre los mejores restaurantes y lugares para comer en Madrid
+>
+> URL PARA USARLA CON SOLO HACER CLICK -> https://eats-and-thinks-web-prototype.vercel.app/
 
 Una aplicación web moderna para buscar, valorar y descubrir restaurantes, con sistema de reseñas, favoritos y gestión administrativa.
 
