@@ -4,178 +4,120 @@
 >
 > URL PARA USARLA CON SOLO HACER CLICK -> https://eats-and-thinks-web-prototype.vercel.app/
 
-Una aplicación web moderna para buscar, valorar y descubrir restaurantes, con sistema de reseñas, favoritos y gestión administrativa.
+Portal web/PWA para explorar restaurantes, guardar favoritos, seguir notificaciones y administrar contenido con foco móvil (infinite scroll, historial inteligente, badges centrados).
 
 ---
 
-## ✨ Características
+## ✨ Novedades
 
-- 🔍 **Búsqueda Avanzada:** Filtra por tipo de cocina, precio, rating y más
-- ⭐ **Sistema de Reseñas:** Comparte tus experiencias gastronómicas
-- ❤️ **Favoritos:** Guarda tus lugares preferidos
-- 📍 **Mapas Integrados:** Visualiza la ubicación exacta de cada local
-- 🔐 **3 Tipos de Usuario:** Invitado, Usuario Registrado, Admin
-- 📱 **PWA:** Instalable como aplicación de escritorio
-- 🌐 **Multilingüe:** Interfaz en español
-- 🎨 **UI Moderna:** Diseño glassmorphism con Tailwind CSS
+- Botones “Visitar web” y “Cómo llegar” siempre visibles en desktop, con respaldo a Google Maps.
+- Respuestas de reseñas se cargan de 4 en 4 y ofrecen “Mostrar más”.
+- Panel de notificaciones con scroll interno, límite inicial de 4 items y badge rojo consistente en sidebar/campana.
+- Sidebar desktop colapsable/minimizable con peek táctil y logout convertido en círculo rojo cuando está cerrado.
+- Navegación móvil: Search/Favorites/Profile se despliegan desde arriba y el back button sigue el flujo esperado (última pantalla, Home, salir).
+- Home conserva la posición del infinite scroll y el overlay al volver desde RestaurantDetailScreen.
+- Login/Register admiten PIN numérico de recuperación y desbloqueo con el mismo flujo.
+- Admin Panel muestra «Último acceso» para cualquier superadmin y permite eliminar locales comunitarios.
+- Nueva documentación: `MAPA_TRAZABILIDAD.md` y `src/services/ApiExamples.ts` describen trazabilidad y ejemplos de APIs.
 
 ---
 
-## 🚀 Inicio Rápido
+## 🚀 Arranque rápido
 
-### Opción 1: Con Docker (Recomendado)
+**Docker (recomendado)**
 
-**Windows:**
-1. Instala [Docker Desktop](https://www.docker.com/products/docker-desktop)
-2. Doble click en `start-docker.bat`
-3. Espera ~2 minutos (primera vez)
-4. Abre http://localhost
-
-**Mac/Linux:**
 ```bash
+# Windows: doble click en start-docker.bat
+de start-docker.bat
+
+# Mac/Linux
 docker-compose up --build
 ```
 
-### Opción 2: Desarrollo Local
+**Desarrollo local**
 
-**Backend:**
 ```bash
 cd eatsandthinks-backend
 ./mvnw spring-boot:run
-```
 
-**Frontend:**
-```bash
-cd "EatsAndThinks Web Prototype"
+cd "../EatsAndThinks Web Prototype"
 npm install
 npm run dev
 ```
 
 ---
 
-## 📦 Tecnologías
+## 🧰 Stack principal
 
 ### Frontend
-- ⚛️ React 18 + TypeScript
-- 🎨 Tailwind CSS + Shadcn/ui
-- 🔄 Axios para API calls
-- 🎯 React Context para estado global
-- 📱 Vite + PWA Plugin
-- 🍞 React Toastify para notificaciones
+- React 18 + TypeScript (Vite + plugin PWA)
+- Tailwind CSS + Shadcn/ui + toastify
+- Axios con interceptores, contextos globales y navegación hash con scroll-restoration
 
 ### Backend
-- ☕ Spring Boot 3.x
-- 🔐 Spring Security + JWT
-- 🗄️ MySQL + JPA/Hibernate
-- 🌍 Google Places API integration
-- 📊 RESTful API
+- Spring Boot 3 + Spring Security con JWT
+- MySQL/JPA, servicios `Review`, `Users`, `Places`, `Traceability`
+- Google Places API para fotos, detalles y direcciones
 
-### DevOps
-- 🐳 Docker + Docker Compose
-- 📦 Multi-stage builds optimizados
-- 🚀 Nginx para servir frontend
+### Infraestructura
+- Docker Compose + multi-stage builds
+- Nginx como proxy en producción
+- Vercel (frontend) y Railway (backend/MySQL)
 
 ---
 
-## 👥 Tipos de Usuario
+## 📚 Documentación útil
 
-### 🔓 Invitado
-- ✅ Ver locales y reseñas
-- ❌ No puede publicar reseñas
-- ❌ No tiene favoritos
-
-### 👤 Usuario Registrado
-- ✅ Todo lo de invitado +
-- ✅ Publicar reseñas
-- ✅ Guardar favoritos
-- ✅ Perfil personalizado
-
-### 👑 Administrador
-- ✅ Todo lo de usuario registrado +
-- ✅ Crear locales de la comunidad
-- ✅ Gestionar usuarios (roles, permisos, baneo)
-- ✅ Eliminar reseñas inapropiadas
-- ✅ Ver estadísticas del sistema
-
-**Credenciales de prueba:**
-- Admin: `admin@eatsandthinks.com` / `admin123`
+- `DEPLOYMENT.md` → despliegue PWA + Docker
+- `MAPA_TRAZABILIDAD.md` → arquitectura, servicios y trazabilidad completa
+- `src/services/ApiExamples.ts` → ejemplos de peticiones, retries y manejo de errores HTTP
+- `generate-icons.html` → generador de iconos PWA
 
 ---
 
-## 📖 Documentación
-
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Guía completa de despliegue (PWA + Docker)
-- **[generate-icons.html](./EatsAndThinks%20Web%20Prototype/generate-icons.html)** - Generador de iconos PWA
-
----
-
-## 🎯 Estructura del Proyecto
+## 🧱 Estructura resumida
 
 ```
-EathsAndThinks_Project/
-├── eatsandthinks-backend/          # Backend Spring Boot
-│   ├── src/
-│   │   └── main/
-│   │       ├── java/               # Código Java
-│   │       └── resources/          # Configuración
-│   ├── Dockerfile
-│   └── pom.xml
-│
-├── EatsAndThinks Web Prototype/    # Frontend React
-│   ├── src/
-│   │   ├── components/             # Componentes React
-│   │   ├── services/               # API calls
-│   │   ├── context/                # Estado global
-│   │   └── utils/                  # Utilidades
-│   ├── public/                     # Archivos estáticos
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   └── vite.config.ts
-│
-├── docker-compose.yml              # Orquestación Docker
-├── init-db.sql                     # Init script MySQL
-├── start-docker.bat                # Script Windows
-└── stop-docker.bat                 # Script Windows
+eatsandthinks-backend/          # REST + seguridad + servicios
+EatsAndThinks Web Prototype/    # UI, componentes, contextos, servicios y estilos
+docker-compose.yml             # Orquestación (frontend, backend, MySQL)
+start-docker.bat / stop-docker.bat
+init-db.sql                    # Seed SQL
 ```
 
 ---
 
-## 🛠️ Comandos Útiles
+## ⚙️ Comandos frecuentes
 
-### Docker
 ```bash
-# Iniciar todo
+# Levantar stack
 docker-compose up --build
 
-# Detener
+# Parar
 docker-compose down
 
-# Ver logs
+# Logs
 docker-compose logs -f
 
-# Reiniciar desde cero
+# Rebuild completo
 docker-compose down -v && docker-compose up --build
-```
 
-### Desarrollo
-```bash
-# Construir PWA
-cd "EatsAndThinks Web Prototype"
+# Frontend
+npm run dev
 npm run build
-
-# Preview PWA
 npm run preview
 
-# Backend con hot reload
+# Backend
 cd eatsandthinks-backend
 ./mvnw spring-boot:run
 ```
 
 ---
 
-## 🌐 Despliegue en Producción
+## 🚢 Despliegue
 
 ### Frontend (Vercel)
+
 ```bash
 npm install -g vercel
 cd "EatsAndThinks Web Prototype"
@@ -183,44 +125,30 @@ vercel --prod
 ```
 
 ### Backend + MySQL (Railway)
-1. [railway.app](https://railway.app) → New Project
-2. Deploy from GitHub
-3. Add MySQL database
-4. Configura variables de entorno
+
+1. Crear proyecto en [railway.app](https://railway.app)
+2. Desplegar desde GitHub
+3. Añadir base de datos MySQL
+4. Configurar variables de entorno
 
 ---
 
-## 🔒 Variables de Entorno
-
-Crea `.env` en la raíz:
+## 🔐 Variables de entorno
 
 ```env
 GOOGLE_PLACES_API_KEY=tu_api_key
-MYSQL_ROOT_PASSWORD=tu_password
+MYSQL_ROOT_PASSWORD=secreto
 MYSQL_DATABASE=eatsandthinks
 ```
 
 ---
 
-## 🐛 Solución de Problemas
+## 🐞 Atajos de troubleshooting
 
-### Puerto ocupado
-```bash
-# Cambiar puerto en docker-compose.yml
-ports:
-  - "8081:80"  # Usar 8081 en lugar de 80
-```
+- Cambia puertos en `docker-compose.yml` si están ocupados (`ports: - "8081:80"`).
+- Usa `docker-compose logs mysql` y `docker inspect eatsandthinks-mysql` para monitorear MySQL.
+- Para reinstalar dependencias:
 
-### MySQL no conecta
-```bash
-# Esperar a que inicie
-docker-compose logs mysql
-
-# Verificar salud
-docker inspect eatsandthinks-mysql
-```
-
-### Reinstalar dependencias
 ```bash
 cd "EatsAndThinks Web Prototype"
 rm -rf node_modules package-lock.json
@@ -229,27 +157,15 @@ npm install
 
 ---
 
-## 📝 Licencia
-
-Este proyecto es de código abierto para fines educativos.
-
----
-
 ## 🤝 Contribuir
 
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+1. Fork → `git checkout -b feature/nombre`
+2. Commit descriptivo
+3. Push y abrir PR
 
 ---
 
 ## 🎉 ¡Disfruta EatsAndThinks!
 
-**Desarrollado con ❤️ y mucho ☕**
-
-Para soporte o preguntas, abre un issue en GitHub.
+Desarrollado con ❤️ y ☕
 
