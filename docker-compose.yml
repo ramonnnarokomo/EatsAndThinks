@@ -57,6 +57,8 @@ services:
     build:
       context: ./EatsAndThinks Web Prototype
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE: http://localhost:8080/api
     container_name: eatsandthinks-frontend
     restart: unless-stopped
     depends_on:
@@ -65,8 +67,6 @@ services:
       - "80:80"
     networks:
       - eatsandthinks-network
-    environment:
-      VITE_API_URL: http://localhost:8080
 
 volumes:
   mysql_data:
