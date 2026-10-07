@@ -176,11 +176,14 @@ docker-compose up -d
 
 ## 🔧 Variables de Entorno
 
-Crea un archivo `.env` en la raíz del proyecto:
+Copia `.env.example` como `.env` en la raíz del proyecto (el `.env` no se sube al repo):
 
 ```env
 # Google Places API Key
 GOOGLE_PLACES_API_KEY=tu_api_key_aqui
+
+# Secreto para firmar los JWT (mínimo 32 caracteres aleatorios, ver .env.example)
+JWT_SECRET=genera_uno_aleatorio
 
 # MySQL (solo si usas Docker)
 MYSQL_ROOT_PASSWORD=rootpassword

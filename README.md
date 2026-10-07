@@ -80,7 +80,7 @@ En móvil: a la izquierda, los locales a pantalla completa; a la derecha, el lis
 
 ## Arranque rápido
 
-Lo más cómodo es Docker, que te levanta las tres piezas sin configurar nada más:
+Lo más cómodo es Docker, que te levanta las tres piezas de una vez. Antes copia `.env.example` como `.env` y rellena la API key de Google y el secreto de JWT:
 
 ```bash
 # Windows
@@ -106,11 +106,12 @@ npm run dev
 | Variable | Pieza | Para qué |
 | --- | --- | --- |
 | `GOOGLE_PLACES_API_KEY` | Backend | Google Places y mapas |
+| `JWT_SECRET` | Backend | Secreto para firmar los tokens (mínimo 32 caracteres aleatorios) |
 | `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` | Backend | Conexión a MySQL (con Docker Compose ya van configuradas) |
 | `CORS_ALLOWED_ORIGINS` | Backend | Orígenes desde los que se puede llamar a la API |
 | `VITE_API_BASE` | Frontend | URL de la API (por defecto `http://localhost:8080/api`) |
 
-La API key la sacas de Google Cloud con Places API y Maps JavaScript API activadas.
+La API key la sacas de Google Cloud con Places API y Maps JavaScript API activadas. Ningún secreto va en el repo: `application.properties` solo lee estas variables y, si falta alguna, el backend no arranca. En `.env.example` tienes la plantilla y cómo generar el secreto de JWT.
 
 ## Estructura
 
@@ -119,6 +120,7 @@ eatsandthinks-backend/          API REST, seguridad y servicios
 EatsAndThinks Web Prototype/    UI, componentes, contextos, servicios y estilos
 docs/capturas/                  Capturas de este README
 docker-compose.yml              Orquestación de frontend, backend y MySQL
+.env.example                    Plantilla de las variables con secretos
 init-db.sql                     Datos iniciales
 start-docker.bat / stop-docker.bat
 ```

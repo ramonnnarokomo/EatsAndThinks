@@ -14,6 +14,13 @@ if errorlevel 1 (
 )
 
 echo Docker detectado correctamente.
+
+if not exist .env (
+    echo ERROR: falta el fichero .env con la API key de Google y el secreto de JWT.
+    echo Copia .env.example como .env y rellena los valores.
+    pause
+    exit /b 1
+)
 echo.
 echo Iniciando aplicacion...
 echo Frontend: http://localhost

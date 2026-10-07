@@ -23,7 +23,7 @@ VALUES (
 -- O MEJOR: Usa el endpoint de registro para crear el usuario y luego cambia el rol:
 -- 
 -- 1. POST http://localhost:8080/api/auth/register
---    Body: {"nombre": "Administrator", "email": "admin@gmail.com", "password": "***REMOVED***"}
+--    Body: {"nombre": "Administrator", "email": "admin@gmail.com", "password": "<tu-contraseña>"}
 -- 
 -- 2. Luego ejecuta en MySQL:
 --    UPDATE usuarios SET role = 'ADMIN' WHERE email = 'admin@gmail.com';

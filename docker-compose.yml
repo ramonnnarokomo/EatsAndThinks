@@ -39,7 +39,8 @@ services:
       SPRING_DATASOURCE_USERNAME: eatsandthinks_user
       SPRING_DATASOURCE_PASSWORD: eatsandthinks_pass
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-***REMOVED***}
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:?Falta GOOGLE_PLACES_API_KEY en .env}
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en .env}
     ports:
       - "8080:8080"
     networks:
